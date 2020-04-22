@@ -248,6 +248,7 @@ def extract_entity(text_in):
             break
     end = _ps2[start:end + 1].argmax() + start
     a = text_in[start - 1: end]
+    print('result: {}'.format(a))
     return a
 
 
