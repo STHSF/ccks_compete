@@ -229,8 +229,10 @@ def extract_entity(text_in):
     _x1, _x2 = tokenizer.encode(first=text_in)
     _x1, _x2 = np.array([_x1]), np.array([_x2])
     _ps0, _ps1, _ps2 = subject_model.predict([_x1, _x2])
-    print('{}, {}, {}'.format(_ps0, _ps1, _ps2))
-    _ps0,  _ps1, _ps2 = softmax(_ps0), softmax(_ps1[0]), softmax(_ps2[0])
+    print('_ps0: {}'.format(_ps0))
+    print('_ps1: {}'.format(_ps1))
+    print('_ps2: {}'.format(_ps2))
+    _ps0,  _ps1, _ps2 = softmax(_ps0[0]), softmax(_ps1[0]), softmax(_ps2[0])
     print('_ps0: {}'.format(_ps0))
     print('_ps1: {}'.format(_ps1))
     print('_ps2: {}'.format(_ps2))
@@ -281,7 +283,6 @@ class Evaluate(Callback):
         A = 1e-10
         F = open('dev_pred.json', 'w')
         for d in tqdm(iter(dev_data)):
-            print(d[0])
             R = extract_entity(d[0])
             # if R == d[2]:
             #     A += 1
