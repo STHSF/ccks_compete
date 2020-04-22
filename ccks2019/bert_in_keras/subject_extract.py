@@ -1,26 +1,27 @@
 #! -*- coding: utf-8 -*-
 
-import json
 from tqdm import tqdm
-import os, re
+import os, re, argparse, json, codecs
 import numpy as np
 import pandas as pd
 from keras_bert import load_trained_model_from_checkpoint, Tokenizer
-import codecs
-
 
 mode = 0
 maxlen = 128
 learning_rate = 5e-5
 min_learning_rate = 1e-5
 
-pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
-config_path = pretrain_model + 'chinese_L-12_H-768_A-12/bert_config.json'
-checkpoint_path = pretrain_model + 'chinese_L-12_H-768_A-12/bert_model.ckpt'
-dict_path = pretrain_model + 'chinese_L-12_H-768_A-12/vocab.txt'
+# pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
+# pretrain_model_name = 'chinese_L-12_H-768_A-12'
+
+pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
+pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
+
+config_path = pretrain_model + pretrain_model_name + '/bert_config.json'
+checkpoint_path = pretrain_model + pretrain_model_name + '/bert_model.ckpt'
+dict_path = pretrain_model + pretrain_model_name + '/vocab.txt'
 
 token_dict = {}
-
 with codecs.open(dict_path, 'r', 'utf8') as reader:
     for line in reader:
         token = line.strip()
@@ -34,23 +35,21 @@ class OurTokenizer(Tokenizer):
             if c in self._token_dict:
                 R.append(c)
             elif self._is_space(c):
-                R.append('[unused1]') # space类用未经训练的[unused1]表示
+                R.append('[unused1]')  # space类用未经训练的[unused1]表示
             else:
-                R.append('[UNK]') # 剩余的字符是[UNK]
+                R.append('[UNK]')  # 剩余的字符是[UNK]
         return R
 
-tokenizer = OurTokenizer(token_dict)
 
+tokenizer = OurTokenizer(token_dict)
 
 D = pd.read_csv('../ccks2019_event_entity_extract/event_type_entity_extract_train.csv', encoding='utf-8', header=None)
 D = D[D[2] != u'其他']
 classes = set(D[2].unique())
 
-
 train_data = []
-for t,c,n in zip(D[1], D[2], D[3]):
+for t, c, n in zip(D[1], D[2], D[3]):
     train_data.append((t, c, n))
-
 
 if not os.path.exists('../random_order_train.json'):
     random_order = list(range(len(train_data)))
@@ -63,7 +62,6 @@ if not os.path.exists('../random_order_train.json'):
 else:
     random_order = json.load(open('../random_order_train.json'))
 
-
 dev_data = [train_data[j] for i, j in enumerate(random_order) if i % 9 == mode]
 train_data = [train_data[j] for i, j in enumerate(random_order) if i % 9 != mode]
 additional_chars = set()
@@ -72,10 +70,9 @@ for d in train_data + dev_data:
 
 additional_chars.remove(u'，')
 
-
 D = pd.read_csv('../ccks2019_event_entity_extract/event_type_entity_extract_eval.csv', encoding='utf-8', header=None)
 test_data = []
-for id,t,c in zip(D[0], D[1], D[2]):
+for id, t, c in zip(D[0], D[1], D[2]):
     test_data.append((id, t, c))
 
 
@@ -93,7 +90,7 @@ def list_find(list1, list2):
     """
     n_list2 = len(list2)
     for i in range(len(list1)):
-        if list1[i: i+n_list2] == list2:
+        if list1[i: i + n_list2] == list2:
             return i
     return -1
 
@@ -105,8 +102,10 @@ class data_generator:
         self.steps = len(self.data) // self.batch_size
         if len(self.data) % self.batch_size != 0:
             self.steps += 1
+
     def __len__(self):
         return self.steps
+
     def __iter__(self):
         while True:
             idxs = list(range(len(self.data)))
@@ -145,17 +144,15 @@ import keras.backend as K
 from keras.callbacks import Callback
 from keras.optimizers import Adam
 
-
 bert_model = load_trained_model_from_checkpoint(config_path, checkpoint_path, seq_len=None)
 
 for l in bert_model.layers:
     l.trainable = True
 
-
-x1_in = Input(shape=(None,), name='x1_in') # 待识别句子输入
-x2_in = Input(shape=(None,), name='x2_in') # 待识别句子输入
-s1_in = Input(shape=(None,), name='s1_in') # 实体左边界（标签）
-s2_in = Input(shape=(None,), name='s2_in') # 实体右边界（标签）
+x1_in = Input(shape=(None,), name='x1_in')  # 待识别句子输入
+x2_in = Input(shape=(None,), name='x2_in')  # 待识别句子输入
+s1_in = Input(shape=(None,), name='s1_in')  # 实体左边界（标签）
+s2_in = Input(shape=(None,), name='s2_in')  # 实体右边界（标签）
 
 x1, x2, s1, s2 = x1_in, x2_in, s1_in, s2_in
 x_mask = Lambda(lambda x: K.cast(K.greater(K.expand_dims(x, 2), 0), 'float32'))(x1)
@@ -198,7 +195,7 @@ def extract_entity(text_in, c_in):
     _tokens = tokenizer.tokenize(text_in)
     _x1, _x2 = tokenizer.encode(first=text_in)
     _x1, _x2 = np.array([_x1]), np.array([_x2])
-    _ps1, _ps2  = model.predict([_x1, _x2])
+    _ps1, _ps2 = model.predict([_x1, _x2])
     _ps1, _ps2 = softmax(_ps1[0]), softmax(_ps2[0])
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
@@ -208,8 +205,8 @@ def extract_entity(text_in, c_in):
         _t = _tokens[end]
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
             break
-    end = _ps2[start:end+1].argmax() + start
-    a = text_in[start-1: end]
+    end = _ps2[start:end + 1].argmax() + start
+    a = text_in[start - 1: end]
     return a
 
 
@@ -218,8 +215,10 @@ class Evaluate(Callback):
         self.ACC = []
         self.best = 0.
         self.passed = 0
+
     def on_batch_begin(self, batch, logs=None):
-        """第一个epoch用来warmup，第二个epoch把学习率降到最低
+        """
+        第一个epoch用来warmup，第二个epoch把学习率降到最低
         """
         if self.passed < self.params['steps']:
             lr = (self.passed + 1.) / self.params['steps'] * learning_rate
@@ -230,6 +229,7 @@ class Evaluate(Callback):
             lr += min_learning_rate
             K.set_value(self.model.optimizer.lr, lr)
             self.passed += 1
+
     def on_epoch_end(self, epoch, logs=None):
         acc = self.evaluate()
         self.ACC.append(acc)
@@ -237,6 +237,7 @@ class Evaluate(Callback):
             self.best = acc
             train_model.save_weights('best_model.weights')
         print('acc: %.4f, best acc: %.4f\n' % (acc, self.best))
+
     def evaluate(self):
         A = 1e-10
         F = open('dev_pred.json', 'w')
@@ -264,9 +265,14 @@ train_D = data_generator(train_data)
 print(train_D.__iter__())
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--maxlen', dest='maxlen', default=64, type=float, help="maxlen")
+    args = parser.parse_args()
+    pre_trained_model_name = args.pre_trained_model
+
     train_model.fit_generator(train_D.__iter__(),
                               steps_per_epoch=len(train_D),
                               epochs=10
-                             )
+                              )
 else:
     train_model.load_weights('best_model.weights')
