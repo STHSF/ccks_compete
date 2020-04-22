@@ -4,7 +4,7 @@ import json, os, re
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from bert4keras.backend import keras, K, batch_gather
+from bert4keras.backend import keras, K, batch_gather,set_gelu
 from bert4keras.layers import LayerNormalization
 from bert4keras.layers import Loss, Dropout, Input, Dense, Lambda, Reshape
 from bert4keras.optimizers import Adam
@@ -15,6 +15,7 @@ from bert4keras.snippets import sequence_padding, DataGenerator
 from bert4keras.snippets import open
 from tqdm import tqdm
 
+set_gelu('tanh')  # 切换gelu版本
 pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
 
 mode = 0

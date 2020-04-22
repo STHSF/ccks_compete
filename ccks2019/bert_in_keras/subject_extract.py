@@ -212,6 +212,7 @@ def extract_entity(text_in, c_in):
 
 class Evaluate(Callback):
     def __init__(self):
+        super(Evaluate, self).__init__()
         self.ACC = []
         self.best = 0.
         self.passed = 0

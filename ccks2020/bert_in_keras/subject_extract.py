@@ -12,16 +12,21 @@ from keras.callbacks import Callback
 from keras.optimizers import Adam
 import tensorflow as tf
 
-pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
-
 mode = 0
 maxlen = 128
 learning_rate = 5e-5
 min_learning_rate = 1e-5
 
-config_path = pretrain_model + 'chinese_L-12_H-768_A-12/bert_config.json'
-checkpoint_path = pretrain_model + 'chinese_L-12_H-768_A-12/bert_model.ckpt'
-dict_path = pretrain_model + 'chinese_L-12_H-768_A-12/vocab.txt'
+
+# pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
+# pretrain_model_name = 'chinese_L-12_H-768_A-12'
+
+pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
+pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
+
+config_path = pretrain_model + pretrain_model_name + '/bert_config.json'
+checkpoint_path = pretrain_model + pretrain_model_name + '/bert_model.ckpt'
+dict_path = pretrain_model + pretrain_model_name + '/vocab.txt'
 
 token_dict = {}
 
@@ -245,6 +250,7 @@ def extract_entity(text_in):
 
 class Evaluate(Callback):
     def __init__(self):
+        super(Evaluate, self).__init__()
         self.ACC = []
         self.best = 0.
         self.passed = 0
