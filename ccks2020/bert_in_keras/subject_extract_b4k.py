@@ -15,16 +15,19 @@ from bert4keras.snippets import sequence_padding, DataGenerator
 from bert4keras.snippets import open
 from tqdm import tqdm
 
-pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
 
 mode = 0
 maxlen = 128
 learning_rate = 5e-5
 min_learning_rate = 1e-5
+# pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
+# pretrain_model_name = 'chinese_L-12_H-768_A-12'
 
-config_path = pretrain_model + 'chinese_L-12_H-768_A-12/bert_config.json'
-checkpoint_path = pretrain_model + 'chinese_L-12_H-768_A-12/bert_model.ckpt'
-dict_path = pretrain_model + 'chinese_L-12_H-768_A-12/vocab.txt'
+pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
+pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
+config_path = pretrain_model + pretrain_model_name + '/bert_config.json'
+checkpoint_path = pretrain_model + pretrain_model_name + '/bert_model.ckpt'
+dict_path = pretrain_model + pretrain_model_name + '/vocab.txt'
 
 # 建立分词器
 class OurTokenizer(Tokenizer):
@@ -225,7 +228,7 @@ def extract_entity(text_in):
     # text_in = u'___%s___%s' % (c_in, text_in)
     text_in = text_in[:510]
     _tokens = tokenizer.tokenize(text_in)
-    _x1, _x2 = tokenizer.encode(first=text_in)
+    _x1, _x2 = tokenizer.encode(first_text=text_in)
     _x1, _x2 = np.array([_x1]), np.array([_x2])
     _ps0, _ps1, _ps2 = subject_model.predict([_x1, _x2])
     print('_ps0: {}'.format(_ps0))
@@ -235,6 +238,8 @@ def extract_entity(text_in):
     print('_ps0: {}'.format(_ps0))
     print('_ps1: {}'.format(_ps1))
     print('_ps2: {}'.format(_ps2))
+    print('_ps0: {}'.format(id_to_cat[_ps0]))
+
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
             _ps1[i] -= 10
