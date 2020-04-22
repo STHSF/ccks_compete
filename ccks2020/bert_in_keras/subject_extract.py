@@ -1,13 +1,16 @@
 #! -*- coding: utf-8 -*-
 
-import json
 from tqdm import tqdm
-import os, re
+import os, re, json, codecs
 import numpy as np
 import pandas as pd
 from keras_bert import load_trained_model_from_checkpoint, Tokenizer
-import codecs
-import json
+from keras.layers import *
+from keras.models import Model
+import keras.backend as K
+from keras.callbacks import Callback
+from keras.optimizers import Adam
+import tensorflow as tf
 
 pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
 
@@ -117,26 +120,19 @@ class data_generator:
         while True:
             idxs = list(range(len(self.data)))
             np.random.shuffle(idxs)
-            batch_token_ids, batch_segment_ids, S1, S2 = [], [], [], []
             batch_token_ids, batch_segment_ids, S1, S2, batch_labels = [], [], [], [], []
             for i in idxs:
                 d = self.data[i]
                 text, category, label = d[0], d[1], d[2]
-                # print('category: {}'.format(category))
                 text = text[:maxlen]
-                # print('text: {}'.format(text))
                 tokens = tokenizer.tokenize(text)
-                e = label
-                # print('label: {}'.format(e))
-                e_tokens = tokenizer.tokenize(e)[1:-1]
+                e_tokens = tokenizer.tokenize(label)[1:-1]
                 # 构造输出
                 s1, s2 = np.zeros(len(tokens)), np.zeros(len(tokens))
                 start = list_find(tokens, e_tokens)
-                # print('start: {}'.format(start))
 
                 if start != -1:
                     end = start + len(e_tokens) - 1
-                    # print('end: {}'.format(end))
                     s1[start] = 1
                     s2[end] = 1
                     token_ids, segment_ids = tokenizer.encode(first=text)
@@ -145,27 +141,15 @@ class data_generator:
                     S1.append(s1)
                     S2.append(s2)
                     batch_labels.append([cat_to_id[category]])
+
                     if len(batch_token_ids) == self.batch_size or i == idxs[-1]:
                         batch_token_ids = seq_padding(batch_token_ids)
                         batch_segment_ids = seq_padding(batch_segment_ids)
                         S1 = seq_padding(S1)
                         S2 = seq_padding(S2)
                         batch_labels = seq_padding(batch_labels)
-                        print('batch_token_ids: {}'.format(np.shape(batch_token_ids)))
-                        print('batch_segment_ids: {}'.format(np.shape(batch_segment_ids)))
-                        print('S1: {}'.format(np.shape(S1)))
-                        print('S2: {}'.format(np.shape(S2)))
-                        print('batch_labels: {}'.format(np.shape(batch_labels)))
                         yield [batch_token_ids, batch_segment_ids, S1, S2, batch_labels], None
                         batch_token_ids, batch_segment_ids, S1, S2, batch_labels = [], [], [], [], []
-
-from keras.layers import *
-from keras.models import Model
-import keras.backend as K
-from keras.callbacks import Callback
-from keras.optimizers import Adam
-import tensorflow as tf
-
 
 def extrac_subject(inputs):
     """根据subject_ids从output中取出subject的向量表征
@@ -201,7 +185,7 @@ out1 = Dropout(0.5, name='out1')(x)
 ps0 = Dense(units=len(classes), activation='sigmoid', name='ps_category')(out1)
 
 # 利用ps0的信息
-output = bert_output.layers[-2].get_output_at(-1)
+# output = bert_output.layers[-2].get_output_at(-1)
 
 
 ps1 = Dense(1, use_bias=False, name='dps1')(bert_output)
@@ -222,6 +206,10 @@ loss = loss0 + loss1 + loss2
 train_model.add_loss(loss)
 train_model.compile(optimizer=Adam(learning_rate))
 
+if not os.path.exists('../images/model_temp.png'):
+    from keras.utils.vis_utils import plot_model
+    plot_model(train_model, to_file="../images/model_temp.png", show_shapes=True)
+
 
 def softmax(x):
     x = x - np.max(x)
@@ -238,6 +226,10 @@ def extract_entity(text_in):
     _ps0, _ps1, _ps2 = subject_model.predict([_x1, _x2])
     print('{}, {}, {}'.format(_ps0, _ps1, _ps2))
     _ps0,  _ps1, _ps2 = softmax(_ps0), softmax(_ps1[0]), softmax(_ps2[0])
+    print('_ps0: {}'.format(_ps0))
+    print('_ps1: {}'.format(_ps1))
+    print('_ps2: {}'.format(_ps2))
+
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
             _ps1[i] -= 10
@@ -284,12 +276,13 @@ class Evaluate(Callback):
         for d in tqdm(iter(dev_data)):
             print(d[0])
             R = extract_entity(d[0])
-            if R == d[2]:
-                A += 1
-            s = ', '.join(d + (R,))
-            F.write(s.encode('utf-8') + '\n')
-        F.close()
-        return A / len(dev_data)
+            # if R == d[2]:
+            #     A += 1
+            # s = ', '.join(d + (R,))
+            # F.write(s.encode('utf-8') + '\n')
+        # F.close()
+        # return A / len(dev_data)
+        return 0
 
 #
 # def test(test_data):
@@ -304,15 +297,13 @@ class Evaluate(Callback):
 evaluator = Evaluate()
 train_D = data_generator(train_data)
 
-train_D.__iter__()
-
+#
 if __name__ == '__main__':
-    from keras.utils.vis_utils import plot_model
-    plot_model(train_model, to_file="../images/model_temp.png", show_shapes=True)
 
     train_model.fit_generator(train_D.__iter__(),
                               steps_per_epoch=len(train_D),
                               epochs=10,
+                              callbacks=[evaluator]
                               )
-else:
-    train_model.load_weights('best_model.weights')
+# else:
+#     train_model.load_weights('best_model.weights')
