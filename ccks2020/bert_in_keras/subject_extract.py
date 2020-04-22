@@ -248,7 +248,6 @@ def extract_entity(text_in):
             break
     end = _ps2[start:end + 1].argmax() + start
     a = text_in[start - 1: end]
-    print('result: {}'.format(a))
     return a
 
 
@@ -286,6 +285,11 @@ class Evaluate(Callback):
         F = open('dev_pred.json', 'w')
         for d in tqdm(iter(dev_data)):
             R = extract_entity(d[0])
+            print('catogary: {}'.format(d[1]))
+            print('label: {}'.format(d[2]))
+            print('R: {}'.format(R))
+
+
             # if R == d[2]:
             #     A += 1
             # s = ', '.join(d + (R,))
