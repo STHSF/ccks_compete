@@ -4,7 +4,7 @@ import json, os, re
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from bert4keras.backend import keras, K, batch_gather,set_gelu
+from bert4keras.backend import keras, K, batch_gather
 from bert4keras.layers import LayerNormalization
 from bert4keras.layers import Loss, Dropout, Input, Dense, Lambda, Reshape
 from bert4keras.optimizers import Adam
@@ -15,7 +15,6 @@ from bert4keras.snippets import sequence_padding, DataGenerator
 from bert4keras.snippets import open
 from tqdm import tqdm
 
-set_gelu('tanh')  # 切换gelu版本
 pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
 
 mode = 0
@@ -231,6 +230,9 @@ def extract_entity(text_in):
     _ps0, _ps1, _ps2 = subject_model.predict([_x1, _x2])
     print('{}, {}, {}'.format(_ps0, _ps1, _ps2))
     _ps0, _ps1, _ps2 = softmax(_ps0), softmax(_ps1[0]), softmax(_ps2[0])
+    print('_ps0: {}'.format(_ps0))
+    print('_ps1: {}'.format(_ps1))
+    print('_ps2: {}'.format(_ps2))
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
             _ps1[i] -= 10
@@ -246,6 +248,7 @@ def extract_entity(text_in):
 
 class Evaluate(Callback):
     def __init__(self):
+        super(Evaluate, self).__init__()
         self.ACC = []
         self.best = 0.
         self.passed = 0
@@ -277,12 +280,13 @@ class Evaluate(Callback):
         for d in tqdm(iter(dev_data)):
             print(d[0])
             R = extract_entity(d[0])
-            if R == d[2]:
-                A += 1
-            s = ', '.join(d + (R,))
-            F.write(s.encode('utf-8') + '\n')
-        F.close()
-        return A / len(dev_data)
+            # if R == d[2]:
+            #     A += 1
+            # s = ', '.join(d + (R,))
+            # F.write(s.encode('utf-8') + '\n')
+        # F.close()
+        # return A / len(dev_data)
+        return 0
 
 
 #
@@ -298,14 +302,13 @@ class Evaluate(Callback):
 evaluator = Evaluate()
 train_D = data_generator(train_data)
 
-for i in train_D.__iter__():
-    i
 
-# if __name__ == '__main__':
-#
-#     train_model.fit_generator(train_D.__iter__(),
-#                               steps_per_epoch=len(train_D),
-#                               epochs=10,
-#                               )
+if __name__ == '__main__':
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
+    train_model.fit_generator(train_D.__iter__(),
+                              steps_per_epoch=len(train_D),
+                              epochs=10,
+                              callbacks=[evaluator])
 # else:
 #     train_model.load_weights('best_model.weights')

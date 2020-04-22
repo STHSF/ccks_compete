@@ -256,7 +256,8 @@ class Evaluate(Callback):
         self.passed = 0
 
     def on_batch_begin(self, batch, logs=None):
-        """第一个epoch用来warmup，第二个epoch把学习率降到最低
+        """
+        第一个epoch用来warmup，第二个epoch把学习率降到最低
         """
         if self.passed < self.params['steps']:
             lr = (self.passed + 1.) / self.params['steps'] * learning_rate
