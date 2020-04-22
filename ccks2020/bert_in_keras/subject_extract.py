@@ -248,7 +248,7 @@ def extract_entity(text_in):
             break
     end = _ps2[start:end + 1].argmax() + start
     a = text_in[start - 1: end]
-    return a
+    return a, id_to_cat[np.argmax(_ps0)]
 
 
 class Evaluate(Callback):
@@ -284,11 +284,11 @@ class Evaluate(Callback):
         A = 1e-10
         F = open('dev_pred.json', 'w')
         for d in tqdm(iter(dev_data)):
-            R = extract_entity(d[0])
-            print('catogary: {}'.format(d[1]))
-            print('label: {}'.format(d[2]))
-            print('R: {}'.format(R))
-
+            R, ca = extract_entity(d[0])
+            print('catogary_real: {}'.format(d[1]))
+            print('label_real: {}'.format(d[2]))
+            print('catogary_pre: {}'.format(ca))
+            print('label_pre: {}'.format(R))
 
             # if R == d[2]:
             #     A += 1
