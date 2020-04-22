@@ -284,6 +284,7 @@ class Evaluate(Callback):
         F = open('dev_pred.json', 'w')
         for d in tqdm(iter(dev_data)):
             R, ca = extract_entity(d[0])
+            print('================================')
             print('category_real: {}'.format(d[1]))
             print('object_real: {}'.format(d[2]))
             print('category_pre: {}'.format(ca))

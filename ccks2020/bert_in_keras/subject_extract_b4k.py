@@ -231,14 +231,7 @@ def extract_entity(text_in):
     _x1, _x2 = tokenizer.encode(first_text=text_in)
     _x1, _x2 = np.array([_x1]), np.array([_x2])
     _ps0, _ps1, _ps2 = subject_model.predict([_x1, _x2])
-    print('_ps0: {}'.format(_ps0))
-    print('_ps1: {}'.format(_ps1))
-    print('_ps2: {}'.format(_ps2))
     _ps0, _ps1, _ps2 = softmax(_ps0[0]), softmax(_ps1[0]), softmax(_ps2[0])
-    print('_ps0: {}'.format(_ps0))
-    print('_ps1: {}'.format(_ps1))
-    print('_ps2: {}'.format(_ps2))
-    print('_ps0: {}'.format(id_to_cat[_ps0]))
 
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
@@ -250,7 +243,7 @@ def extract_entity(text_in):
             break
     end = _ps2[start:end + 1].argmax() + start
     a = text_in[start - 1: end]
-    return a
+    return a, id_to_cat[np.argmax(_ps0)]
 
 
 class Evaluate(Callback):
@@ -286,7 +279,11 @@ class Evaluate(Callback):
         F = open('dev_pred.json', 'w')
         for d in tqdm(iter(dev_data)):
             print(d[0])
-            R = extract_entity(d[0])
+            R, obj = extract_entity(d[0])
+            print('category_real: {}'.format(d[1]))
+            print('object_real: {}'.format(d[2]))
+            print('category_pre: {}'.format(obj))
+            print('object_pre: {}'.format(R))
             # if R == d[2]:
             #     A += 1
             # s = ', '.join(d + (R,))
