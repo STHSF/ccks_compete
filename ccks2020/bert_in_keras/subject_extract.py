@@ -236,6 +236,9 @@ def extract_entity(text_in):
     print('_ps0: {}'.format(_ps0))
     print('_ps1: {}'.format(_ps1))
     print('_ps2: {}'.format(_ps2))
+    print('_ps0: {}'.format(id_to_cat[_ps0]))
+
+
 
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
