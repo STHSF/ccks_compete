@@ -1,7 +1,7 @@
 #! -*- coding: utf-8 -*-
 
 from tqdm import tqdm
-import os, re, json, codecs
+import os, re, json, codecs, argparse
 import numpy as np
 import pandas as pd
 from keras_bert import load_trained_model_from_checkpoint, Tokenizer
@@ -317,7 +317,14 @@ train_D = data_generator(train_data)
 
 
 if __name__ == '__main__':
-    if not os.path.exists('../model/best_model.weights'):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--is_train', dest='is_train',
+                        default=True,
+                        type=bool, help="train or test")
+    args = parser.parse_args()
+    is_train = args.is_train
+
+    if is_train:
         print('Training......')
         train_model.fit_generator(train_D.__iter__(),
                                   steps_per_epoch=len(train_D),
