@@ -304,7 +304,7 @@ def test():
     for d in tqdm(iter(test_data)):
         _object, _category = extract_entity(d[1])
         s = '%s\t%s\t%s\t%s\n' % (d[0], d[1], _category, _object)
-        s = s.encode('utf-8')
+        # s = s.encode('utf-8')
         F.write(str(s))
     F.close()
 
