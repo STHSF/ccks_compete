@@ -415,8 +415,6 @@ trainData, testData = get_data()
 
 # In[21]:
 
-
-trainData, testData = get_data()
 D = trainData
 train_data = []
 for c, e in zip(D['content'], D['entity']):
