@@ -11,7 +11,8 @@ import keras.backend as K
 from keras.callbacks import Callback
 from keras.optimizers import Adam
 import tensorflow as tf
-from ccks_compete.ccks2020.bert_in_keras.data_process import *
+# from ccks_compete.ccks2020.bert_in_keras.data_process import *
+from data_process import *
 
 mode = 0
 maxlen = 128
