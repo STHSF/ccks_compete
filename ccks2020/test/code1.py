@@ -118,10 +118,19 @@ def get_length(x):
 # In[4]:
 
 
-path_drive = '../../../weight/chinese_wwm_ext_L-12_H-768_A-12/'
-config_path = path_drive + 'bert_config.json'
-checkpoint_path = path_drive + 'bert_model.ckpt'
-dict_path = path_drive + 'vocab.txt'
+# path_drive = '../../../weight/chinese_wwm_ext_L-12_H-768_A-12/'
+# config_path = path_drive + 'bert_config.json'
+# checkpoint_path = path_drive + 'bert_model.ckpt'
+# dict_path = path_drive + 'vocab.txt'
+
+pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
+# pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
+pretrain_model_name = 'chinese_roberta_wwm_ext_L-12_H-768_A-12'
+
+config_path = pretrain_model + pretrain_model_name + '/bert_config.json'
+checkpoint_path = pretrain_model + pretrain_model_name + '/bert_model.ckpt'
+dict_path = pretrain_model + pretrain_model_name + '/vocab.txt'
+
 
 mode = 0
 maxlen = 400
