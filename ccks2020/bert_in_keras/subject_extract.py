@@ -200,7 +200,8 @@ subject_model = Model([q_x_in, q_s_in], [ps0, ps1, ps2])
 train_model = Model([q_x_in, q_s_in, q_st_in, q_en_in, q_label_in], [ps0, ps1, ps2])
 train_model.summary()
 
-loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
+# loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
+loss0 = K.mean(K.categorical_crossentropy(q_label, ps0, from_logits=True))
 loss1 = K.mean(K.categorical_crossentropy(q_st, ps1, from_logits=True))
 ps2 -= (1 - K.cumsum(q_st, 1)) * 1e10
 loss2 = K.mean(K.categorical_crossentropy(q_en, ps2, from_logits=True))
@@ -283,26 +284,25 @@ class Evaluate(Callback):
         A = 1e-10
         B = 1e-10
         C = 1e-10
-        for d in tqdm(iter(dev_data)):
-            _object, _category = extract_entity(d[0])
+        for doc in tqdm(iter(dev_data)):
+            _object, _category = extract_entity(doc[0])
             # print('================================')
-            # print('category_real: {}'.format(d[1]))
+            # print('category_real: {}'.format(doc[1]))
             # print('category_pre: {}'.format(_category))
             # print('============')
-            # print('object_real: {}'.format(d[2]))
+            # print('object_real: {}'.format(doc[2]))
             # print('object_pre: {}'.format(_object))
-            if _object == d[2]:
+            if _object == doc[2]:
                 # 事件主体
                 C += 1
-            if _category == d[1]:
+            if _category == doc[1]:
                 # 事件类型
                 B += 1
-            if _object == d[2] and _category == d[1]:
+            if _object == doc[2] and _category == doc[1]:
                 A += 1
         category_acc = B / len(dev_data)
         object_acc = C / len(dev_data)
         total_acc = A / len(dev_data)
-
         return total_acc, object_acc, category_acc
 
 
