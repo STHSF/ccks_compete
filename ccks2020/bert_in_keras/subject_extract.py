@@ -300,17 +300,12 @@ class Evaluate(Callback):
 def test():
     D = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
     test_data = D[0].apply(lambda x: x.split('\t')).values
-    # F = open('result.txt', 'w')
     result = []
     for d in tqdm(iter(test_data)):
         _object, _category = extract_entity(d[1])
         result.append([d[0], _category, _object])
-        # s = '%s\t%s\t%s\n' % (d[0], _category, _object)
-        # s = s.encode('utf-8')
-        # F.write(str(s))
     result_df = pd.DataFrame(result)
-    result_df.to_csv('result.csv', sep='\t', index=False, header=False)
-    # F.close()
+    result_df.to_csv('result.csv', encoding='utf-8', sep='\t', index=False, header=False)
 
 evaluator = Evaluate()
 train_D = data_generator(train_data)
