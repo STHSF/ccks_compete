@@ -55,8 +55,8 @@ tokenizer = OurTokenizer(token_dict)
 
 trainData, testData = get_data()
 
-trainData = trainData[trainData[2] != u'nan']
-classes = list(set(trainData[2].unique()))
+trainData = trainData[trainData['content_type'] != u'nan']
+classes = list(set(trainData['content_type'].unique()))
 
 # 将分类目录固定，转换为{类别: id}表示;
 categories = set(classes)
@@ -65,7 +65,7 @@ cat_to_id = dict(zip(categories, range(len(categories))))
 id_to_cat = dict(zip(range(len(categories)), categories))
 
 train_data = []
-for t, c, n in zip(trainData[1], trainData[2], trainData[3]):
+for t, c, n in zip(trainData['content'], trainData['content_type'], trainData['entity']):
     train_data.append((t, c, n))
 
 if not os.path.exists('../random_order_train.json'):
