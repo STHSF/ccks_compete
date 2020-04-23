@@ -254,7 +254,8 @@ class Evaluate(Callback):
         self.passed = 0
 
     def on_batch_begin(self, batch, logs=None):
-        """第一个epoch用来warmup，第二个epoch把学习率降到最低
+        """
+        第一个epoch用来warmup，第二个epoch把学习率降到最低
         """
         if self.passed < self.params['steps']:
             lr = (self.passed + 1.) / self.params['steps'] * learning_rate
@@ -271,7 +272,7 @@ class Evaluate(Callback):
         self.ACC.append(acc)
         if acc > self.best:
             self.best = acc
-            train_model.save_weights('best_model.weights')
+            train_model.save_weights('best_model_b4k.weights')
         print('acc: %.4f, best acc: %.4f\n' % (acc, self.best))
 
     def evaluate(self):
@@ -280,12 +281,15 @@ class Evaluate(Callback):
         for d in tqdm(iter(dev_data)):
             print(d[0])
             R, obj = extract_entity(d[0])
+            print('================================')
             print('category_real: {}'.format(d[1]))
             print('object_real: {}'.format(d[2]))
+            print('============')
             print('category_pre: {}'.format(obj))
             print('object_pre: {}'.format(R))
-            # if R == d[2]:
-            #     A += 1
+
+            if R == d[2] and obj == d[1]:
+                A += 1
             # s = ', '.join(d + (R,))
             # F.write(s.encode('utf-8') + '\n')
         # F.close()
