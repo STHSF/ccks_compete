@@ -306,9 +306,9 @@ def test():
     D = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
     test_data = D[0].apply(lambda x: x.split('\t')).values
     result = []
-    for d in tqdm(iter(test_data)):
-        _object, _category = extract_entity(d[1])
-        result.append([d[0], _category, _object])
+    for doc in tqdm(iter(test_data)):
+        _object, _category = extract_entity(doc[1])
+        result.append([doc[0], _category, _object])
     result_df = pd.DataFrame(result)
     result_df.to_csv('result.csv', encoding='utf-8', sep='\t', index=False, header=False)
 
