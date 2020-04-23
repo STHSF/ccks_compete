@@ -11,6 +11,7 @@ import keras.backend as K
 from keras.callbacks import Callback
 from keras.optimizers import Adam
 import tensorflow as tf
+from ccks_compete.ccks2020.bert_in_keras.data_process import *
 
 mode = 0
 maxlen = 128
@@ -50,9 +51,12 @@ class OurTokenizer(Tokenizer):
 
 tokenizer = OurTokenizer(token_dict)
 
-D = pd.read_csv('../ccks2020Data/event_entity_train_data_label.csv', encoding='utf-8', header=None, sep='\t')
-D = D[D[2] != u'nan']
-classes = list(set(D[2].unique()))
+# trainData = pd.read_csv('../ccks2020Data/event_entity_train_data_label.csv', encoding='utf-8', header=None, sep='\t')
+
+trainData, testData = get_data()
+
+trainData = trainData[trainData[2] != u'nan']
+classes = list(set(trainData[2].unique()))
 
 # 将分类目录固定，转换为{类别: id}表示;
 categories = set(classes)
@@ -61,7 +65,7 @@ cat_to_id = dict(zip(categories, range(len(categories))))
 id_to_cat = dict(zip(range(len(categories)), categories))
 
 train_data = []
-for t, c, n in zip(D[1], D[2], D[3]):
+for t, c, n in zip(trainData[1], trainData[2], trainData[3]):
     train_data.append((t, c, n))
 
 if not os.path.exists('../random_order_train.json'):
@@ -165,6 +169,17 @@ def extrac_subject(inputs):
     return subject[:, 0]
 
 
+def focal_loss(gamma=2., alpha=.25):
+    gamma = float(gamma)
+    alpha = float(alpha)
+
+    def focal_loss_fixed(y_true, y_pred):
+        pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
+        pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
+        return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(K.epsilon()+pt_1))-K.sum((1-alpha) * K.pow( pt_0, gamma) * K.log(1. - pt_0 + K.epsilon()))
+    return focal_loss_fixed
+
+
 # 加载预训练模型
 bert_model = load_trained_model_from_checkpoint(config_path, checkpoint_path, seq_len=None)
 
@@ -189,7 +204,6 @@ ps0 = Dense(units=len(classes), activation='sigmoid', name='ps_category')(out1)
 
 # 利用ps0的信息
 # output = bert_output.layers[-2].get_output_at(-1)
-
 
 ps1 = Dense(1, use_bias=False, name='dps1')(bert_output)
 ps1 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_heads')([ps1, x_mask])
@@ -232,18 +246,22 @@ def extract_entity(text_in):
     # print('_ps0: {} \n _ps1: {} \n _ps2: {}'.format(_ps0, _ps1, _ps2))
     _ps0, _ps1, _ps2 = softmax(_ps0[0]), softmax(_ps1[0]), softmax(_ps2[0])
     # print('_ps0: {} \n _ps1: {} \n _ps2: {}'.format(_ps0, _ps1, _ps2))
+    category = id_to_cat[np.argmax(_ps0)]
+    if category == '其他':
+        _object = '无实体'
+    else:
+        for i, _t in enumerate(_tokens):
+            if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
+                _ps1[i] -= 10
+        start = _ps1.argmax()
+        for end in range(start, len(_tokens)):
+            _t = _tokens[end]
+            if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
+                break
+        end = _ps2[start:end + 1].argmax() + start
+        _object = text_in[start - 1: end]
 
-    for i, _t in enumerate(_tokens):
-        if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
-            _ps1[i] -= 10
-    start = _ps1.argmax()
-    for end in range(start, len(_tokens)):
-        _t = _tokens[end]
-        if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
-            break
-    end = _ps2[start:end + 1].argmax() + start
-    _object = text_in[start - 1: end]
-    return _object, id_to_cat[np.argmax(_ps0)]
+    return _object, category
 
 
 class Evaluate(Callback):
@@ -302,9 +320,12 @@ class Evaluate(Callback):
         return total_acc, object_acc, category_acc
 
 
-def test():
-    D = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
-    test_data = D[0].apply(lambda x: x.split('\t')).values
+def test(test_data=None):
+    if test_data is None:
+        test_data = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
+    else:
+        test_data = test_data
+    test_data = test_data[0].apply(lambda x: x.split('\t')).values
     result = []
     for doc in tqdm(iter(test_data)):
         _object, _category = extract_entity(doc[1])
