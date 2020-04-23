@@ -211,7 +211,6 @@ train_model.compile(optimizer=Adam(learning_rate))
 
 if not os.path.exists('../images/model_temp.png'):
     from keras.utils.vis_utils import plot_model
-
     plot_model(train_model, to_file="../images/model_temp.png", show_shapes=True)
 
 
@@ -244,8 +243,8 @@ def extract_entity(text_in):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
             break
     end = _ps2[start:end + 1].argmax() + start
-    a = text_in[start - 1: end]
-    return a, id_to_cat[np.argmax(_ps0)]
+    _object = text_in[start - 1: end]
+    return _object, id_to_cat[np.argmax(_ps0)]
 
 
 class Evaluate(Callback):
@@ -270,32 +269,39 @@ class Evaluate(Callback):
             self.passed += 1
 
     def on_epoch_end(self, epoch, logs=None):
-        acc = self.evaluate()
-        self.ACC.append(acc)
-        if acc > self.best:
-            self.best = acc
+        total_acc, object_acc, catogary_acc = self.evaluate()
+        self.ACC.append(total_acc)
+        if total_acc > self.best:
+            self.best = total_acc
             train_model.save_weights('../model/best_model.weights')
-        print('acc: %.4f, best acc: %.4f\n' % (acc, self.best))
+        print('total_acc: %.4f, best total_acc: %.4f\n' % (total_acc, self.best))
+        print('subject_acc: %.4f, catogary_acc: %.4f\n' % (object_acc, catogary_acc))
 
     def evaluate(self):
         A = 1e-10
-        F = open('dev_pred.json', 'w')
+        B = 1e-10
+        C = 1e-10
         for d in tqdm(iter(dev_data)):
-            R, obj = extract_entity(d[0])
-            print('================================')
-            print('category_real: {}'.format(d[1]))
-            print('category_pre: {}'.format(obj))
-            print('============')
-            print('object_real: {}'.format(d[2]))
-            print('object_pre: {}'.format(R))
-
-            if R == d[2] and obj == d[1]:
+            _object, _category = extract_entity(d[0])
+            # print('================================')
+            # print('category_real: {}'.format(d[1]))
+            # print('category_pre: {}'.format(_category))
+            # print('============')
+            # print('object_real: {}'.format(d[2]))
+            # print('object_pre: {}'.format(_object))
+            if _object == d[2]:
+                # 事件主体
+                C += 1
+            if _category == d[1]:
+                # 事件类型
+                B += 1
+            if _object == d[2] and _category == d[1]:
                 A += 1
-            # s = ', '.join(d + (R,))
-            # F.write(s.encode('utf-8') + '\n')
-        # F.close()
-        return A / len(dev_data)
-        # return 0
+        category_acc = B / len(dev_data)
+        object_acc = C / len(dev_data)
+        total_acc = A / len(dev_data)
+
+        return total_acc, object_acc, category_acc
 
 
 def test():
