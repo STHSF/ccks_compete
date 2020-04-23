@@ -200,11 +200,11 @@ subject_model = Model([q_x_in, q_s_in], [ps0, ps1, ps2])
 train_model = Model([q_x_in, q_s_in, q_st_in, q_en_in, q_label_in], [ps0, ps1, ps2])
 train_model.summary()
 
-# loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
-loss0 = K.mean(K.categorical_crossentropy(q_label, ps0, from_logits=True))
-loss1 = K.mean(K.categorical_crossentropy(q_st, ps1, from_logits=True))
+loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
+# loss0 = K.mean(K.categorical_crossentropy(q_label, ps0, from_logits=True))
+loss1 = K.mean(K.sparse_categorical_crossentropy(q_st, ps1, from_logits=True))
 ps2 -= (1 - K.cumsum(q_st, 1)) * 1e10
-loss2 = K.mean(K.categorical_crossentropy(q_en, ps2, from_logits=True))
+loss2 = K.mean(K.sparse_categorical_crossentropy(q_en, ps2, from_logits=True))
 
 loss = loss0 + loss1 + loss2
 train_model.add_loss(loss)
