@@ -302,7 +302,7 @@ def test():
     test_data = D[0].apply(lambda x: x.split('\t')).values
     F = open('result.txt', 'w')
     for d in tqdm(iter(test_data)):
-        _category, _object = extract_entity(d[1])
+        _object, _category = extract_entity(d[1])
         s = '%s\t%s\t%s\n' % (d[0], _category, _object)
         s = s.encode('utf-8')
         F.write(str(s))
