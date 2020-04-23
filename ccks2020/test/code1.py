@@ -85,9 +85,9 @@ def metl_data(df):
 
 
 def get_data():
-    train = pd.read_csv('../data/event_entity_train_data_label.csv', sep='\t', header=None,
+    train = pd.read_csv('../ccks2020Data/event_entity_train_data_label.csv', sep='\t', header=None,
                         names=['uid', 'content', 'content_type', 'entity'])
-    test = pd.read_csv('../data/event_entity_dev_data.csv', sep='\t', header=None, names=['uid', 'content'])
+    test = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', sep='\t', header=None, names=['uid', 'content'])
     train = train[~train.content_type.isnull()].drop_duplicates().reset_index(drop=True)
     train['content'] = train['content'].apply(lambda x: cut_sentences(x))
     train['content'] = list(map(lambda x, y: [i for i in x if y in i], train['content'], train['entity']))
