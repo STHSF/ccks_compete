@@ -272,7 +272,7 @@ class Evaluate(Callback):
         self.ACC.append(acc)
         if acc > self.best:
             self.best = acc
-            train_model.save_weights('best_model_b4k.weights')
+            train_model.save_weights('../model/best_model_b4k.weights')
         print('acc: %.4f, best acc: %.4f\n' % (acc, self.best))
 
     def evaluate(self):
