@@ -305,6 +305,7 @@ def test():
 
     F = open('result.txt', 'w')
     for d in tqdm(iter(test_data)):
+        print(d)
         _category, _object = extract_entity(d[1])
         s = u'"%s"\t"%s"\t"%s"\n' % (d[0], _category, _object)
         s = s.encode('utf-8')
