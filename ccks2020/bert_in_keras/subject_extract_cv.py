@@ -163,54 +163,58 @@ def extrac_subject(inputs):
     return subject[:, 0]
 
 
-# 加载预训练模型
-bert_model = load_trained_model_from_checkpoint(config_path, checkpoint_path, seq_len=None)
-
-for l in bert_model.layers:
-    l.trainable = True
-bert_model.summary()
-
-q_x_in = Input(shape=(None,), name='Input-Token-query')  # 待识别句子输入
-q_s_in = Input(shape=(None,), name='Input-Segment-query')  # 待识别句子输入
-q_st_in = Input(shape=(None,), name='Input-Start-query')  # 实体左边界（标签）
-q_en_in = Input(shape=(None,), name='Input-End-query')  # 实体右边界（标签）
-q_label_in = Input(shape=(None,), name='Input-label-query')  # 实体右边界（标签）
-
-tokens, segments, q_st, q_en, q_label = q_x_in, q_s_in, q_st_in, q_en_in, q_label_in
-x_mask = Lambda(lambda x: K.cast(K.greater(K.expand_dims(x, 2), 0), 'float32'), name='x_mask')(tokens)
-bert_output = bert_model([tokens, segments])
-
-# 预测category
-x = Lambda(lambda x: x[:, 0], name='CLS_Token')(bert_output)
-out1 = Dropout(0.5, name='out1')(x)
-ps0 = Dense(units=len(classes), activation='sigmoid', name='ps_category')(out1)
-
-# 利用ps0的信息
-# output = bert_output.layers[-2].get_output_at(-1)
+def build_model():
 
 
-ps1 = Dense(1, use_bias=False, name='dps1')(bert_output)
-ps1 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_heads')([ps1, x_mask])
-ps2 = Dense(1, use_bias=False, name='dps2')(bert_output)
-ps2 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_tails')([ps2, x_mask])
-subject_model = Model([q_x_in, q_s_in], [ps0, ps1, ps2])
 
-train_model = Model([q_x_in, q_s_in, q_st_in, q_en_in, q_label_in], [ps0, ps1, ps2])
-train_model.summary()
+    # 加载预训练模型
+    bert_model = load_trained_model_from_checkpoint(config_path, checkpoint_path, seq_len=None)
 
-loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
-loss1 = K.mean(K.categorical_crossentropy(q_st, ps1, from_logits=True))
-ps2 -= (1 - K.cumsum(q_st, 1)) * 1e10
-loss2 = K.mean(K.categorical_crossentropy(q_en, ps2, from_logits=True))
+    for l in bert_model.layers:
+        l.trainable = True
+    bert_model.summary()
 
-loss = loss0 + loss1 + loss2
-train_model.add_loss(loss)
-train_model.compile(optimizer=Adam(learning_rate))
+    q_x_in = Input(shape=(None,), name='Input-Token-query')  # 待识别句子输入
+    q_s_in = Input(shape=(None,), name='Input-Segment-query')  # 待识别句子输入
+    q_st_in = Input(shape=(None,), name='Input-Start-query')  # 实体左边界（标签）
+    q_en_in = Input(shape=(None,), name='Input-End-query')  # 实体右边界（标签）
+    q_label_in = Input(shape=(None,), name='Input-label-query')  # 实体右边界（标签）
 
-if not os.path.exists('../images/model_temp.png'):
-    from keras.utils.vis_utils import plot_model
+    tokens, segments, q_st, q_en, q_label = q_x_in, q_s_in, q_st_in, q_en_in, q_label_in
+    x_mask = Lambda(lambda x: K.cast(K.greater(K.expand_dims(x, 2), 0), 'float32'), name='x_mask')(tokens)
+    bert_output = bert_model([tokens, segments])
 
-    plot_model(train_model, to_file="../images/model_temp.png", show_shapes=True)
+    # 预测category
+    x = Lambda(lambda x: x[:, 0], name='CLS_Token')(bert_output)
+    out1 = Dropout(0.5, name='out1')(x)
+    ps0 = Dense(units=len(classes), activation='sigmoid', name='ps_category')(out1)
+
+    # 利用ps0的信息
+    # output = bert_output.layers[-2].get_output_at(-1)
+    ps1 = Dense(1, use_bias=False, name='dps1')(bert_output)
+    ps1 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_heads')([ps1, x_mask])
+    ps2 = Dense(1, use_bias=False, name='dps2')(bert_output)
+    ps2 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_tails')([ps2, x_mask])
+    subject_model = Model([q_x_in, q_s_in], [ps0, ps1, ps2])
+
+    train_model = Model([q_x_in, q_s_in, q_st_in, q_en_in, q_label_in], [ps0, ps1, ps2])
+    train_model.summary()
+
+    loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
+    loss1 = K.mean(K.categorical_crossentropy(q_st, ps1, from_logits=True))
+    ps2 -= (1 - K.cumsum(q_st, 1)) * 1e10
+    loss2 = K.mean(K.categorical_crossentropy(q_en, ps2, from_logits=True))
+
+    loss = loss0 + loss1 + loss2
+    train_model.add_loss(loss)
+    train_model.compile(optimizer=Adam(learning_rate))
+
+    if not os.path.exists('../images/model_temp.png'):
+        from keras.utils.vis_utils import plot_model
+
+        plot_model(train_model, to_file="../images/model_temp.png", show_shapes=True)
+
+    return train_model, subject_model
 
 
 def softmax(x):
@@ -318,12 +322,10 @@ train_D = data_generator(train_data)
 #
 if __name__ == '__main__':
     if not os.path.exists('../model/best_model.weights'):
-        print('Training......')
         train_model.fit_generator(train_D.__iter__(),
                                   steps_per_epoch=len(train_D),
                                   epochs=10,
                                   callbacks=[evaluator])
     else:
-        print('Testing.......')
         train_model.load_weights('../model/best_model.weights')
         test()
