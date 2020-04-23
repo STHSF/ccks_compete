@@ -14,7 +14,7 @@ import tensorflow as tf
 
 mode = 0
 maxlen = 128
-learning_rate = 5e-5
+learning_rate = 2e-5
 min_learning_rate = 1e-5
 
 # pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
@@ -78,9 +78,11 @@ else:
 
 dev_data = [train_data[j] for i, j in enumerate(random_order) if i % 9 == mode]
 train_data = [train_data[j] for i, j in enumerate(random_order) if i % 9 != mode]
+print('len_train_data: {}, len_dev_data: {}'.format(len(train_data), len(dev_data)))
 additional_chars = set()
 for d in train_data + dev_data:
     additional_chars.update(re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', d[2]))
+print('additional_chars: {}'.format(additional_chars))
 
 additional_chars.remove(u'，')
 
@@ -220,7 +222,6 @@ def softmax(x):
 
 
 def extract_entity(text_in):
-    # text_in = u'___%s___%s' % (c_in, text_in)
     text_in = text_in[:510]
     _tokens = tokenizer.tokenize(text_in)
     _x1, _x2 = tokenizer.encode(first=text_in)
