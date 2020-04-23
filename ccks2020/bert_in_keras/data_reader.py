@@ -28,10 +28,14 @@ test_data = D[0].apply(lambda x: x.split('\t')).values
 #     test_data.append((id, text))
 # print(test_data)
 # F = open('result.txt', 'w')
-F = open('result.csv', 'w')
+F = open('result.txt', 'w')
+result = []
 for d in tqdm(iter(test_data)):
+    result.append([d[0], d[1]])
     s = '%s\t%s\n' % (d[0], d[1])
     s = s.encode('utf-8')
     print(s)
-    F.write(str(s))
-F.close()
+    # F.write(str(s))
+result_df = pd.DataFrame(result)
+result_df.to_csv('result.csv', sep='\t', index=False, header=False)
+# F.close()
