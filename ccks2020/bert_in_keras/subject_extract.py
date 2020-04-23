@@ -17,11 +17,11 @@ maxlen = 128
 learning_rate = 5e-5
 min_learning_rate = 1e-5
 
-# pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
-# pretrain_model_name = 'chinese_L-12_H-768_A-12'
+pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
+pretrain_model_name = 'chinese_L-12_H-768_A-12'
 
-pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
-pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
+# pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
+# pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
 
 config_path = pretrain_model + pretrain_model_name + '/bert_config.json'
 checkpoint_path = pretrain_model + pretrain_model_name + '/bert_model.ckpt'
@@ -299,9 +299,11 @@ class Evaluate(Callback):
 
 def test():
     D = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
-    test_data = []
-    for id, text in zip(D[0], D[1]):
-        test_data.append((id, text))
+    # test_data = []
+    # print(D)
+    # for id, text in zip(D[0], D[1]):
+    #     test_data.append((id, text))
+    test_data = D[0].apply(lambda x: x.split('\t')).values
 
     F = open('result.txt', 'w')
     for d in tqdm(iter(test_data)):
@@ -316,15 +318,15 @@ def test():
 evaluator = Evaluate()
 train_D = data_generator(train_data)
 
-#
-if __name__ == '__main__':
-    if not os.path.exists('../model/best_model.weights'):
-        print('Training......')
-        train_model.fit_generator(train_D.__iter__(),
-                                  steps_per_epoch=len(train_D),
-                                  epochs=10,
-                                  callbacks=[evaluator])
-    else:
-        print('Testing.......')
-        train_model.load_weights('../model/best_model.weights')
-        test()
+
+# if __name__ == '__main__':
+#     if not os.path.exists('../model/best_model.weights'):
+#         print('Training......')
+#         train_model.fit_generator(train_D.__iter__(),
+#                                   steps_per_epoch=len(train_D),
+#                                   epochs=10,
+#                                   callbacks=[evaluator])
+#     else:
+#         print('Testing.......')
+#         train_model.load_weights('../model/best_model.weights')
+test()
