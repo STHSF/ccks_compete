@@ -28,5 +28,10 @@ test_data = D[0].apply(lambda x: x.split('\t')).values
 #     test_data.append((id, text))
 # print(test_data)
 # F = open('result.txt', 'w')
+F = open('result.csv', 'w')
 for d in tqdm(iter(test_data)):
-    print(d[0])
+    s = '%s\t%s\n' % (d[0], d[1])
+    s = s.encode('utf-8')
+    print(s)
+    F.write(str(s))
+F.close()

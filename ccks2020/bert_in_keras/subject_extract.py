@@ -299,34 +299,27 @@ class Evaluate(Callback):
 
 def test():
     D = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
-    # test_data = []
-    # print(D)
-    # for id, text in zip(D[0], D[1]):
-    #     test_data.append((id, text))
     test_data = D[0].apply(lambda x: x.split('\t')).values
-
     F = open('result.txt', 'w')
     for d in tqdm(iter(test_data)):
-        print(d)
         _category, _object = extract_entity(d[1])
-        s = u'"%s"\t"%s"\t"%s"\n' % (d[0], _category, _object)
+        s = '%s\t%s\t%s\n' % (d[0], _category, _object)
         s = s.encode('utf-8')
-        F.write(s)
+        F.write(str(s))
     F.close()
-
 
 evaluator = Evaluate()
 train_D = data_generator(train_data)
 
 
-# if __name__ == '__main__':
-#     if not os.path.exists('../model/best_model.weights'):
-#         print('Training......')
-#         train_model.fit_generator(train_D.__iter__(),
-#                                   steps_per_epoch=len(train_D),
-#                                   epochs=10,
-#                                   callbacks=[evaluator])
-#     else:
-#         print('Testing.......')
-#         train_model.load_weights('../model/best_model.weights')
-test()
+if __name__ == '__main__':
+    if not os.path.exists('../model/best_model.weights'):
+        print('Training......')
+        train_model.fit_generator(train_D.__iter__(),
+                                  steps_per_epoch=len(train_D),
+                                  epochs=10,
+                                  callbacks=[evaluator])
+    else:
+        print('Testing.......')
+        train_model.load_weights('../model/best_model.weights')
+        test()
