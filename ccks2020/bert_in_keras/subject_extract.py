@@ -229,13 +229,9 @@ def extract_entity(text_in):
     _x1, _x2 = tokenizer.encode(first=text_in)
     _x1, _x2 = np.array([_x1]), np.array([_x2])
     _ps0, _ps1, _ps2 = subject_model.predict([_x1, _x2])
-    # print('_ps0: {}'.format(_ps0))
-    # print('_ps1: {}'.format(_ps1))
-    # print('_ps2: {}'.format(_ps2))
+    # print('_ps0: {} \n _ps1: {} \n _ps2: {}'.format(_ps0, _ps1, _ps2))
     _ps0, _ps1, _ps2 = softmax(_ps0[0]), softmax(_ps1[0]), softmax(_ps2[0])
-    # print('_ps0: {}'.format(_ps0))
-    # print('_ps1: {}'.format(_ps1))
-    # print('_ps2: {}'.format(_ps2))
+    # print('_ps0: {} \n _ps1: {} \n _ps2: {}'.format(_ps0, _ps1, _ps2))
 
     for i, _t in enumerate(_tokens):
         if len(_t) == 1 and re.findall(u'[^\u4e00-\u9fa5a-zA-Z0-9\*]', _t) and _t not in additional_chars:
