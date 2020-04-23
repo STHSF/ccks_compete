@@ -22,13 +22,15 @@ from keras.utils import multi_gpu_model
 import keras.backend as K
 from keras.callbacks import Callback
 from keras.optimizers import Adam
+from keras.metrics import top_k_categorical_accuracy, categorical_accuracy
 
 
 # In[2]:
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 def top_2_acc(y_true, y_pred):
-    return mt.top_k_categorical_accuracy(y_true, y_pred, k=2)
+    return top_k_categorical_accuracy(y_true, y_pred, k=2)
 
 
 def delete_tag(s):
