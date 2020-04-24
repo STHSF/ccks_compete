@@ -280,9 +280,10 @@ class Evaluate(Callback):
 
     def evaluate(self):
         A = 1e-10
-        F = open('dev_pred.json', 'w')
-        for d in tqdm(iter(dev_data)):
-            R, obj = extract_entity(d[0])
+        B = 1e-10
+        C = 1e-10
+        for doc in tqdm(iter(dev_data)):
+            _object, _category = extract_entity(doc[0])
             # print('================================')
             # print('category_real: {}'.format(d[1]))
             # print('object_real: {}'.format(d[2]))
@@ -290,13 +291,18 @@ class Evaluate(Callback):
             # print('category_pre: {}'.format(obj))
             # print('object_pre: {}'.format(R))
 
-            if R == d[2] and obj == d[1]:
+            if _object == doc[2]:
+                # 事件主体
+                C += 1
+            if _category == doc[1]:
+                # 事件类型
+                B += 1
+            if _object == doc[2] and _category == doc[1]:
                 A += 1
-            # s = ', '.join(d + (R,))
-            # F.write(s.encode('utf-8') + '\n')
-        # F.close()
-        # return A / len(dev_data)
-        return 0
+        category_acc = B / len(dev_data)
+        object_acc = C / len(dev_data)
+        total_acc = A / len(dev_data)
+        return total_acc, object_acc, category_acc
 
 
 #
