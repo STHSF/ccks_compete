@@ -353,9 +353,7 @@ train_D = data_generator(train_data)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--is_train', dest='is_train',
-                        default=True,
-                        type=bool, help="train or test")
+    parser.add_argument('--is_train', dest='is_train', default=False, type=bool, help="train or test")
     args = parser.parse_args()
     is_train = args.is_train
     print(is_train)
