@@ -229,8 +229,7 @@ loss2 = K.mean(K.categorical_crossentropy(q_en, ps2, from_logits=True))
 loss = 0.4 * loss0 + 0.6 * (loss1 + loss2)
 train_model.add_loss(loss)
 train_model.compile(optimizer=Adam(learning_rate),
-                    metrics=['accuracy'],
-                    )
+                    metrics=['accuracy'])
 
 if not os.path.exists('../images/model_temp.png'):
     from keras.utils.vis_utils import plot_model

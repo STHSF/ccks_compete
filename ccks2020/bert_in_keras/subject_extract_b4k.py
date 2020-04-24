@@ -325,7 +325,7 @@ train_D = data_generator(train_data)
 
 
 if __name__ == '__main__':
-    set_gelu('gelu')
+    set_gelu('tanh')
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     parser = argparse.ArgumentParser()
     parser.add_argument('--is_train', dest='is_train',
