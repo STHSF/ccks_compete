@@ -274,7 +274,7 @@ class Evaluate(Callback):
         total_acc, object_acc, catogary_acc = self.evaluate()
         self.ACC.append(total_acc)
         if total_acc > self.best:
-            self.best = totalacc
+            self.best = total_acc
             train_model.save_weights('../model/best_model_b4k.weights')
         print('total_acc: %.4f, best acc: %.4f\n' % (total_acc, self.best))
         print('subject_acc: %.4f, catogary_acc: %.4f\n' % (object_acc, catogary_acc))
