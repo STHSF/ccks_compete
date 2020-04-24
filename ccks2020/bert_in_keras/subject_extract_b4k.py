@@ -1,13 +1,13 @@
 #! -*- coding: utf-8 -*-
 
-import json, os, re
+import json, os, re, argparse
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from bert4keras.backend import keras, K, batch_gather
 from bert4keras.layers import LayerNormalization
 from bert4keras.layers import Loss, Dropout, Input, Dense, Lambda, Reshape
-from bert4keras.optimizers import Adam
+from bert4keras.optimizers import Adam, extend_with_exponential_moving_average
 from keras.callbacks import Callback
 from bert4keras.tokenizers import Tokenizer
 from bert4keras.models import build_transformer_model, Model
@@ -211,7 +211,10 @@ class TotalLoss(Loss):
 ps_category, ps_heads, ps_tails = TotalLoss([3,4,5])([q_start_in, q_end_in, q_label_in, ps_category, ps_heads, ps_tails])
 train_model = Model(bert_model.model.inputs + [q_start_in, q_end_in, q_label_in], [ps_category, ps_heads, ps_tails])
 train_model.summary()
-train_model.compile(optimizer=Adam(learning_rate))
+
+AdamEMA = extend_with_exponential_moving_average(Adam, name='AdamEMA')
+optimizer = AdamEMA(learning_rate=learning_rate)
+train_model.compile(optimizer=optimizer)
 
 if not os.path.exists('../images/model_temp_b4k.png'):
     from keras.utils.vis_utils import plot_model
@@ -277,33 +280,43 @@ class Evaluate(Callback):
 
     def evaluate(self):
         A = 1e-10
-        F = open('dev_pred.json', 'w')
-        for d in tqdm(iter(dev_data)):
-            R, obj = extract_entity(d[0])
-            print('================================')
-            print('category_real: {}'.format(d[1]))
-            print('object_real: {}'.format(d[2]))
-            print('============')
-            print('category_pre: {}'.format(obj))
-            print('object_pre: {}'.format(R))
+        B = 1e-10
+        C = 1e-10
+        for doc in tqdm(iter(dev_data)):
+            _object, _category = extract_entity(doc[0])
+            # print('================================')
+            # print('category_real: {}'.format(d[1]))
+            # print('object_real: {}'.format(d[2]))
+            # print('============')
+            # print('category_pre: {}'.format(obj))
+            # print('object_pre: {}'.format(R))
 
-            if R == d[2] and obj == d[1]:
+            if _object == doc[2]:
+                # 事件主体
+                C += 1
+            if _category == doc[1]:
+                # 事件类型
+                B += 1
+            if _object == doc[2] and _category == doc[1]:
                 A += 1
-            # s = ', '.join(d + (R,))
-            # F.write(s.encode('utf-8') + '\n')
-        # F.close()
-        # return A / len(dev_data)
-        return 0
+        category_acc = B / len(dev_data)
+        object_acc = C / len(dev_data)
+        total_acc = A / len(dev_data)
+        return total_acc, object_acc, category_acc
 
 
-#
-# def test(test_data):
-#     F = open('result.txt', 'w')
-#     for d in tqdm(iter(test_data)):
-#         s = u'"%s","%s"\n' % (d[0], extract_entity(d[1], d[2]))
-#         s = s.encode('utf-8')
-#         F.write(s)
-#     F.close()
+def test(test_data=None):
+    if test_data is None:
+        test_data = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
+    else:
+        test_data = test_data
+    test_data = test_data[0].apply(lambda x: x.split('\t')).values
+    result = []
+    for doc in tqdm(iter(test_data)):
+        _object, _category = extract_entity(doc[1])
+        result.append([doc[0], _category, _object])
+    result_df = pd.DataFrame(result)
+    result_df.to_csv('result.csv', encoding='utf-8', sep='\t', index=False, header=False)
 
 
 evaluator = Evaluate()
@@ -312,10 +325,20 @@ train_D = data_generator(train_data)
 
 if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--is_train', dest='is_train',
+                        default=True,
+                        type=bool, help="train or test")
+    args = parser.parse_args()
+    is_train = args.is_train
 
-    train_model.fit_generator(train_D.__iter__(),
-                              steps_per_epoch=len(train_D),
-                              epochs=10,
-                              callbacks=[evaluator])
-# else:
-#     train_model.load_weights('best_model.weights')
+    if is_train:
+        print('Training......')
+        train_model.fit_generator(train_D.__iter__(),
+                                  steps_per_epoch=len(train_D),
+                                  epochs=10,
+                                  callbacks=[evaluator])
+    else:
+        print('Testing.......')
+        train_model.load_weights('../model/best_model.weights')
+        test()

@@ -21,7 +21,6 @@ min_learning_rate = 1e-5
 
 # pretrain_model = '/Users/li/workshop/MyRepository/DeepQ/preTrainedModel/tensorlfow/'
 # pretrain_model_name = 'chinese_L-12_H-768_A-12'
-
 pretrain_model = '/home/dqnlp/virtualenv/preTrainedModel/'
 pretrain_model_name = 'chinese_wwm_L-12_H-768_A-12'
 
@@ -52,13 +51,19 @@ class OurTokenizer(Tokenizer):
 
 tokenizer = OurTokenizer(token_dict)
 
-# trainData = pd.read_csv('../ccks2020Data/event_entity_train_data_label.csv', encoding='utf-8', header=None, sep='\t')
+trainData = pd.read_csv('../ccks2020Data/event_entity_train_data_label.csv',
+                        encoding='utf-8',
+                        header=None,
+                        sep='\t',
+                        names=['uid', 'content', 'content_type', 'entity'])
+trainData = trainData[~trainData.content_type.isnull()].drop_duplicates().reset_index(drop=True)
 
-trainData, testData = get_data()
+# trainData, testData = get_data()
+# print(trainData['content_type'])
 
 trainData = trainData[trainData['content_type'] != u'nan']
 classes = list(set(trainData['content_type'].unique()))
-
+# print(classes)
 # 将分类目录固定，转换为{类别: id}表示;
 categories = set(classes)
 categories = [str(x) for x in categories]

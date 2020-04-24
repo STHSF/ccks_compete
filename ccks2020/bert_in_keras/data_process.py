@@ -71,15 +71,17 @@ def get_data():
     test = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', header=None)
     test = test[0].apply(lambda x: x.split('\t')).values.tolist()
     test = pd.DataFrame(test, columns=['uid', 'content'])
+    test['content'] = test['content'].apply(lambda x: cut_sentences(str(x)))
+    test['content'] = test['content'].apply(lambda x: delete_tag(x))
+    test = metl_data(test)
+
     train = train[~train.content_type.isnull()].drop_duplicates().reset_index(drop=True)
     train['content'] = train['content'].apply(lambda x: cut_sentences(str(x)))
     train['content'] = list(map(lambda x, y: [i for i in x if y in i], train['content'], train['entity']))
     train_n = metl_data(train)
     train = train_n.merge(train[['uid', 'entity']], how='left')
-    test['content'] = test['content'].apply(lambda x: cut_sentences(str(x)))
-    test = metl_data(test)
+
     train['content'] = train['content'].apply(lambda x: delete_tag(x))
-    test['content'] = test['content'].apply(lambda x: delete_tag(x))
 
     train['content'] = list(map(lambda x, y: x[x.find(y) - 200:x.find(y) + 200], train['content'], train['entity']))
     return train, test
