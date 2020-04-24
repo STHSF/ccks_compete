@@ -226,7 +226,7 @@ loss1 = K.mean(K.categorical_crossentropy(q_st, ps1, from_logits=True))
 ps2 -= (1 - K.cumsum(q_st, 1)) * 1e10
 loss2 = K.mean(K.categorical_crossentropy(q_en, ps2, from_logits=True))
 
-loss = loss0 + loss1 + loss2
+loss = 0.3 * loss0 + 0.7 * (loss1 + loss2)
 train_model.add_loss(loss)
 train_model.compile(optimizer=Adam(learning_rate),
                     metrics=['accuracy'],

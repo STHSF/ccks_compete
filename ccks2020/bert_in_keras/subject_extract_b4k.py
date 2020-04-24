@@ -271,12 +271,13 @@ class Evaluate(Callback):
             self.passed += 1
 
     def on_epoch_end(self, epoch, logs=None):
-        acc = self.evaluate()
-        self.ACC.append(acc)
-        if acc > self.best:
-            self.best = acc
+        total_acc, object_acc, catogary_acc = self.evaluate()
+        self.ACC.append(total_acc)
+        if total_acc > self.best:
+            self.best = totalacc
             train_model.save_weights('../model/best_model_b4k.weights')
-        print('acc: %.4f, best acc: %.4f\n' % (acc, self.best))
+        print('total_acc: %.4f, best acc: %.4f\n' % (total_acc, self.best))
+        print('subject_acc: %.4f, catogary_acc: %.4f\n' % (object_acc, catogary_acc))
 
     def evaluate(self):
         A = 1e-10
