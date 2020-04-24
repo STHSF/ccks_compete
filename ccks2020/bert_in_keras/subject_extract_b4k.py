@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-import json, os, re
+import json, os, re, argparse
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -305,14 +305,18 @@ class Evaluate(Callback):
         return total_acc, object_acc, category_acc
 
 
-#
-# def test(test_data):
-#     F = open('result.txt', 'w')
-#     for d in tqdm(iter(test_data)):
-#         s = u'"%s","%s"\n' % (d[0], extract_entity(d[1], d[2]))
-#         s = s.encode('utf-8')
-#         F.write(s)
-#     F.close()
+def test(test_data=None):
+    if test_data is None:
+        test_data = pd.read_csv('../ccks2020Data/event_entity_dev_data.csv', encoding='utf-8', header=None)
+    else:
+        test_data = test_data
+    test_data = test_data[0].apply(lambda x: x.split('\t')).values
+    result = []
+    for doc in tqdm(iter(test_data)):
+        _object, _category = extract_entity(doc[1])
+        result.append([doc[0], _category, _object])
+    result_df = pd.DataFrame(result)
+    result_df.to_csv('result.csv', encoding='utf-8', sep='\t', index=False, header=False)
 
 
 evaluator = Evaluate()
@@ -321,10 +325,20 @@ train_D = data_generator(train_data)
 
 if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--is_train', dest='is_train',
+                        default=True,
+                        type=bool, help="train or test")
+    args = parser.parse_args()
+    is_train = args.is_train
 
-    train_model.fit_generator(train_D.__iter__(),
-                              steps_per_epoch=len(train_D),
-                              epochs=10,
-                              callbacks=[evaluator])
-# else:
-#     train_model.load_weights('best_model.weights')
+    if is_train:
+        print('Training......')
+        train_model.fit_generator(train_D.__iter__(),
+                                  steps_per_epoch=len(train_D),
+                                  epochs=10,
+                                  callbacks=[evaluator])
+    else:
+        print('Testing.......')
+        train_model.load_weights('../model/best_model.weights')
+        test()
