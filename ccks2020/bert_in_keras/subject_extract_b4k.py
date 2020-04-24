@@ -283,12 +283,12 @@ class Evaluate(Callback):
         F = open('dev_pred.json', 'w')
         for d in tqdm(iter(dev_data)):
             R, obj = extract_entity(d[0])
-            print('================================')
-            print('category_real: {}'.format(d[1]))
-            print('object_real: {}'.format(d[2]))
-            print('============')
-            print('category_pre: {}'.format(obj))
-            print('object_pre: {}'.format(R))
+            # print('================================')
+            # print('category_real: {}'.format(d[1]))
+            # print('object_real: {}'.format(d[2]))
+            # print('============')
+            # print('category_pre: {}'.format(obj))
+            # print('object_pre: {}'.format(R))
 
             if R == d[2] and obj == d[1]:
                 A += 1
