@@ -193,7 +193,6 @@ bert_model = load_trained_model_from_checkpoint(config_path, checkpoint_path, se
 
 for l in bert_model.layers:
     l.trainable = True
-bert_model.summary()
 
 q_x_in = Input(shape=(None,), name='Input-Token-query')  # 待识别句子输入
 q_s_in = Input(shape=(None,), name='Input-Segment-query')  # 待识别句子输入
@@ -228,7 +227,6 @@ ps2 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_tails'
 subject_model = Model([q_x_in, q_s_in], [ps0, ps1, ps2])
 
 train_model = Model([q_x_in, q_s_in, q_st_in, q_en_in, q_label_in], [ps0, ps1, ps2])
-train_model.summary()
 
 loss0 = K.mean(K.sparse_categorical_crossentropy(q_label, ps0, from_logits=True))
 # loss0 = K.mean(K.categorical_crossentropy(q_label, ps0, from_logits=True))
@@ -362,8 +360,10 @@ if __name__ == '__main__':
     is_train = args.is_train
     print(is_train)
 
-    if is_train:
+    if is_train is True:
         print('Training......')
+        subject_model.summary()
+        train_model.summary()
         train_model.fit_generator(train_D.__iter__(),
                                   steps_per_epoch=len(train_D),
                                   epochs=10,
