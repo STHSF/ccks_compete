@@ -4,7 +4,7 @@ import json, os, re, argparse
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from bert4keras.backend import keras, K, batch_gather
+from bert4keras.backend import keras, K, batch_gather, set_gelu
 from bert4keras.layers import LayerNormalization
 from bert4keras.layers import Loss, Dropout, Input, Dense, Lambda, Reshape
 from bert4keras.optimizers import Adam, extend_with_exponential_moving_average
@@ -325,6 +325,7 @@ train_D = data_generator(train_data)
 
 
 if __name__ == '__main__':
+    set_gelu('gelu')
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     parser = argparse.ArgumentParser()
     parser.add_argument('--is_train', dest='is_train',
