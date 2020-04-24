@@ -7,7 +7,7 @@ import tensorflow as tf
 from bert4keras.backend import keras, K, batch_gather
 from bert4keras.layers import LayerNormalization
 from bert4keras.layers import Loss, Dropout, Input, Dense, Lambda, Reshape
-from bert4keras.optimizers import Adam
+from bert4keras.optimizers import Adam, extend_with_exponential_moving_average
 from keras.callbacks import Callback
 from bert4keras.tokenizers import Tokenizer
 from bert4keras.models import build_transformer_model, Model
@@ -211,7 +211,10 @@ class TotalLoss(Loss):
 ps_category, ps_heads, ps_tails = TotalLoss([3,4,5])([q_start_in, q_end_in, q_label_in, ps_category, ps_heads, ps_tails])
 train_model = Model(bert_model.model.inputs + [q_start_in, q_end_in, q_label_in], [ps_category, ps_heads, ps_tails])
 train_model.summary()
-train_model.compile(optimizer=Adam(learning_rate))
+
+AdamEMA = extend_with_exponential_moving_average(Adam, name='AdamEMA')
+optimizer = AdamEMA(learning_rate=learning_rate)
+train_model.compile(optimizer=optimizer)
 
 if not os.path.exists('../images/model_temp_b4k.png'):
     from keras.utils.vis_utils import plot_model
