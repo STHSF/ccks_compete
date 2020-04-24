@@ -182,7 +182,9 @@ def focal_loss(gamma=2., alpha=.25):
     def focal_loss_fixed(y_true, y_pred):
         pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
         pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
-        return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(K.epsilon()+pt_1))-K.sum((1-alpha) * K.pow( pt_0, gamma) * K.log(1. - pt_0 + K.epsilon()))
+        return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(K.epsilon() + pt_1)) - K.sum(
+            (1 - alpha) * K.pow(pt_0, gamma) * K.log(1. - pt_0 + K.epsilon()))
+
     return focal_loss_fixed
 
 
@@ -210,6 +212,14 @@ ps0 = Dense(units=len(classes), activation='sigmoid', name='ps_category')(out1)
 
 # 利用ps0的信息
 # output = bert_output.layers[-2].get_output_at(-1)
+# bert_output = Dropout(rate=0.1)(bert_output)
+# bert_output1 = Bidirectional(LSTM(units=128,
+#                                   return_sequences=True, ),
+#                              merge_mode="concat")(bert_output)
+#
+# bert_output2 = Bidirectional(LSTM(units=128,
+#                                   return_sequences=True, ),
+#                              merge_mode="concat")(bert_output)
 
 ps1 = Dense(1, use_bias=False, name='dps1')(bert_output)
 ps1 = Lambda(lambda x: x[0][..., 0] - (1 - x[1][..., 0]) * 1e10, name='ps_heads')([ps1, x_mask])
@@ -233,6 +243,7 @@ train_model.compile(optimizer=Adam(learning_rate),
 
 if not os.path.exists('../images/model_temp.png'):
     from keras.utils.vis_utils import plot_model
+
     plot_model(train_model, to_file="../images/model_temp.png", show_shapes=True)
 
 
@@ -338,9 +349,9 @@ def test(test_data=None):
     result_df = pd.DataFrame(result)
     result_df.to_csv('result.csv', encoding='utf-8', sep='\t', index=False, header=False)
 
+
 evaluator = Evaluate()
 train_D = data_generator(train_data)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -349,6 +360,7 @@ if __name__ == '__main__':
                         type=bool, help="train or test")
     args = parser.parse_args()
     is_train = args.is_train
+    print(is_train)
 
     if is_train:
         print('Training......')
